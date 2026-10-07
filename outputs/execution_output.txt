@@ -1,0 +1,42 @@
+2026-10-07 15:06:56,204 [INFO] =========================================================
+2026-10-07 15:06:56,204 [INFO] Starting Retail Customer Segmentation & Sales Forecasting
+2026-10-07 15:06:56,204 [INFO] =========================================================
+2026-10-07 15:06:56,205 [WARNING] =========================================================
+2026-10-07 15:06:56,205 [WARNING] REAL DATASET NOT FOUND!
+2026-10-07 15:06:56,205 [WARNING] USE_REAL_DATA=True, but expected real dataset file (data/online_retail.csv or data/Online Retail.xlsx) was not found.
+2026-10-07 15:06:56,205 [WARNING] Directory 'data/' does not exist.
+2026-10-07 15:06:56,205 [WARNING] Falling back to SYNTHETIC dataset...
+2026-10-07 15:06:56,205 [WARNING] =========================================================
+
+2026-10-07 15:06:56,205 [INFO] Using SYNTHETIC dataset
+2026-10-07 15:06:56,205 [INFO] Synthetic dataset missing at 'C:\Users\praka\OneDrive\Pictures\Documents\ML PROJECT\data\synthetic_retail_transactions.csv'. Generating dataset now...
+2026-10-07 15:06:56,205 [INFO] Initializing synthetic transaction data generation...
+2026-10-07 15:06:56,295 [INFO] Generated 1200 transactions across 150 customers spanning 2025-01-01 to 2025-06-29.
+2026-10-07 15:06:56,295 [INFO] Successfully saved synthetic dataset to 'C:\Users\praka\OneDrive\Pictures\Documents\ML PROJECT\data\synthetic_retail_transactions.csv'.
+2026-10-07 15:06:56,295 [INFO] Executing Track 1: RFM Customer Segmentation...
+2026-10-07 15:07:00,622 [INFO] RFM Segmentation completed successfully.
+2026-10-07 15:07:00,630 [INFO] 
+=== CUSTOMER SEGMENT PROFILE SUMMARY ===
+                       Customer_Count  Recency_Median  Frequency_Median  Monetary_Median  Total_Segment_Spend
+Segment                                                                                                      
+VIP / High Spender                 36             2.0              10.0          508.715             19036.16
+Regular Customer                   61            20.0               9.0          480.110             31001.41
+At-Risk / Low Spender              53            33.0               5.0          284.770             14915.48
+2026-10-07 15:07:00,633 [INFO] Saved RFM customer segmentation results to 'C:\Users\praka\OneDrive\Pictures\Documents\ML PROJECT\outputs\customer_rfm_segments.csv'.
+2026-10-07 15:07:00,634 [INFO] Executing Track 2: Daily Sales Forecasting Pipeline...
+2026-10-07 15:07:00,654 [INFO] Cleaned daily calendar dataset: 173 observations spanning 2025-01-08 to 2025-06-29.
+2026-10-07 15:07:00,655 [INFO] Chronological 80/20 Split -> Train size: 138 days, Test size: 35 days.
+2026-10-07 15:07:00,944 [INFO] 
+=== FORECAST MODEL EVALUATION METRICS ===
+2026-10-07 15:07:00,945 [INFO] Holdout Mean Absolute Error (MAE): $145.56 USD/day
+2026-10-07 15:07:00,945 [INFO] Holdout Coefficient of Determination (R^2): 0.2710
+2026-10-07 15:07:00,956 [INFO] 
+Feature Importance Breakdown:
+DayOfWeek    0.479725
+Lag_7_Day    0.267654
+Lag_1_Day    0.182005
+Month        0.070616
+2026-10-07 15:07:00,956 [INFO] Generating visual intelligence dashboard saved to 'C:\Users\praka\OneDrive\Pictures\Documents\ML PROJECT\outputs\retail_intelligence_dashboard.png'...
+2026-10-07 15:07:03,689 [INFO] Dashboard saved successfully to 'C:\Users\praka\OneDrive\Pictures\Documents\ML PROJECT\outputs\retail_intelligence_dashboard.png'.
+2026-10-07 15:07:03,689 [INFO] 
+Pipeline execution completed successfully with zero errors!

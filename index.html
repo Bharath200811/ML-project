@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retail Customer Segmentation & Sales Forecasting Intelligence</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="brand">
+                <i class="fa-solid fa-chart-line brand-icon"></i>
+                <div class="brand-text">
+                    <h2>RetailAI</h2>
+                    <span>Intelligence Hub</span>
+                </div>
+            </div>
+
+            <nav class="nav-menu">
+                <a href="#overview" class="nav-item active" data-tab="overview">
+                    <i class="fa-solid fa-gauge"></i> Overview & Metrics
+                </a>
+                <a href="#track1" class="nav-item" data-tab="track1">
+                    <i class="fa-solid fa-users-gear"></i> Track 1: RFM Segmentation
+                </a>
+                <a href="#track2" class="nav-item" data-tab="track2">
+                    <i class="fa-solid fa-arrow-trend-up"></i> Track 2: Sales Forecast
+                </a>
+                <a href="#dataset" class="nav-item" data-tab="dataset">
+                    <i class="fa-solid fa-database"></i> Synthetic Data Audit
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="model-badge">
+                    <i class="fa-solid fa-microchip"></i>
+                    <div>
+                        <strong>ML Models active</strong>
+                        <span>K-Means (k=3) & RF (100 trees)</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="top-header">
+                <div class="header-title">
+                    <h1>Retail Customer Segmentation & Sales Forecasting</h1>
+                    <p>End-to-End Enterprise Retail Analytics Solution (1,200 Transactions | 150 Customers | 180 Days)</p>
+                </div>
+                <div class="header-actions">
+                    <button id="btn-run-pipeline" class="btn btn-primary">
+                        <i class="fa-solid fa-play"></i> Re-Run Simulation & Pipeline
+                    </button>
+                </div>
+            </header>
+
+            <!-- Metrics KPI Grid -->
+            <section class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="kpi-icon icon-blue"><i class="fa-solid fa-receipt"></i></div>
+                    <div class="kpi-data">
+                        <span class="kpi-title">Total Synthetic Transactions</span>
+                        <h3 id="kpi-total-tx">1,200</h3>
+                        <span class="kpi-sub text-muted">Across 180 Days (Jan-Jun 2025)</span>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-icon icon-green"><i class="fa-solid fa-crown"></i></div>
+                    <div class="kpi-data">
+                        <span class="kpi-title">VIP Segment Share</span>
+                        <h3 id="kpi-vip-count">--</h3>
+                        <span id="kpi-vip-spend" class="kpi-sub text-success">Total Spend: $--</span>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-icon icon-amber"><i class="fa-solid fa-bullseye"></i></div>
+                    <div class="kpi-data">
+                        <span class="kpi-title">Forecast Test MAE</span>
+                        <h3 id="kpi-mae">$--</h3>
+                        <span class="kpi-sub text-muted">Mean Absolute Error (USD/day)</span>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-icon icon-purple"><i class="fa-solid fa-chart-pie"></i></div>
+                    <div class="kpi-data">
+                        <span class="kpi-title">Forecast Model R² Score</span>
+                        <h3 id="kpi-r2">--</h3>
+                        <span class="kpi-sub text-muted">Chronological 80/20 Test Holdout</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 1: OVERVIEW -->
+            <div id="tab-overview" class="tab-content active">
+                <div class="grid-2-col">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3><i class="fa-solid fa-users"></i> Customer Persona Distribution (RFM + K-Means)</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <canvas id="chart-persona-pie"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3><i class="fa-solid fa-square-poll-vertical"></i> Feature Importance Breakdown</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <canvas id="chart-feature-importance"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card margin-top">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-chart-line"></i> Daily Aggregated Sales History & Test Holdout Forecast</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container tall">
+                            <canvas id="chart-daily-sales-overview"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 2: TRACK 1 - RFM SEGMENTATION -->
+            <div id="tab-track1" class="tab-content">
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <h3>Track 1: Customer Segmentation via RFM & K-Means (n_clusters=3)</h3>
+                            <p class="card-sub">Features standard-scaled with StandardScaler. Persona profiles assigned by Monetary median rank.</p>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="grid-2-col">
+                            <div class="chart-container">
+                                <canvas id="chart-rfm-scatter"></canvas>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="chart-rfm-monetary-box"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card margin-top">
+                    <div class="card-header">
+                        <h3>Cluster Behavioral Profile Summary Table</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="data-table" id="rfm-summary-table">
+                                <thead>
+                                    <tr>
+                                        <th>Behavioral Profile</th>
+                                        <th>Customer Count</th>
+                                        <th>Median Recency (Days)</th>
+                                        <th>Median Frequency (Orders)</th>
+                                        <th>Median Spend ($ USD)</th>
+                                        <th>Total Segment Spend ($ USD)</th>
+                                    </tr>
+                                </thead>
+                                <tbody><!-- Populated dynamically by JS --></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 3: TRACK 2 - SALES FORECASTING -->
+            <div id="tab-track2" class="tab-content">
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <h3>Track 2: Daily Sales Forecasting (Lagged Random Forest)</h3>
+                            <p class="card-sub">RandomForestRegressor(n_estimators=100, max_depth=5, random_state=42) evaluated on strict chronological 80/20 split.</p>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container super-tall">
+                            <canvas id="chart-forecast-detail"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid-2-col margin-top">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Model Technical Parameters</h3>
+                        </div>
+                        <div class="card-body">
+                            <ul class="spec-list">
+                                <li><strong>Algorithm:</strong> RandomForestRegressor</li>
+                                <li><strong>Estimators:</strong> 100 decision trees</li>
+                                <li><strong>Max Depth:</strong> 5 (prevents overfitting)</li>
+                                <li><strong>Predictors:</strong> <code>['DayOfWeek', 'Month', 'Lag_1_Day', 'Lag_7_Day']</code></li>
+                                <li><strong>Train/Test Split:</strong> 80% Sequential Train / 20% Holdout Test (No Shuffle)</li>
+                                <li><strong>Random Seed:</strong> 42 (Strict Reproducibility)</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Holdout Metrics Log</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="metric-box">
+                                <div class="metric-item">
+                                    <span class="label">Mean Absolute Error (MAE):</span>
+                                    <span id="detail-mae" class="value text-amber">$0.00 USD/day</span>
+                                </div>
+                                <div class="metric-item">
+                                    <span class="label">Coefficient of Determination (R²):</span>
+                                    <span id="detail-r2" class="value text-purple">0.0000</span>
+                                </div>
+                                <div class="metric-item">
+                                    <span class="label">Test Set Observation Count:</span>
+                                    <span id="detail-test-count" class="value">35 days</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 4: DATASET AUDIT -->
+            <div id="tab-dataset" class="tab-content">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Synthetic Retail Transactions Audit Log (1,200 Rows)</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive scrollable-table">
+                            <table class="data-table" id="transactions-table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Customer ID</th>
+                                        <th>Day of Week</th>
+                                        <th>Is Promo</th>
+                                        <th>Amount ($ USD)</th>
+                                    </tr>
+                                </thead>
+                                <tbody><!-- Dynamic --></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
