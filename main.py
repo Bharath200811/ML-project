@@ -20,11 +20,10 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.metrics import mean_absolute_error, r2_score
 
 from data_loader import load_retail_data, find_available_real_data_path
 from generate_dataset import generate_synthetic_transactions
+from forecasting import prepare_daily_data, split_train_test, train_model, test_model
 
 # Toggle to use real UCI Online Retail data if present (with fallback to synthetic data)
 USE_REAL_DATA = True
@@ -161,94 +160,7 @@ def run_rfm_segmentation(df: pd.DataFrame) -> pd.DataFrame:
 
 
 # =====================================================================
-# STEP 3: Track 2 - Daily Sales Forecasting (Lagged Random Forest)
-# =====================================================================
-def run_daily_sales_forecasting(df: pd.DataFrame):
-    """
-    Aggregates sales by normalized calendar date, reindexes to a complete contiguous daily calendar
-    (filling missing dates with 0 sales), engineers calendar/lag features, performs a chronological 
-    80/20 train-test split, fits a RandomForestRegressor, and evaluates holdout predictions.
-    
-    Returns:
-    --------
-    dict containing model, holdout metrics (MAE, R2), train/test dataframes, and feature importances.
-    """
-    logger.info("Executing Track 2: Daily Sales Forecasting Pipeline...")
-    
-    # 1. Aggregate Amount by normalized date
-    df_date_norm = df.copy()
-    df_date_norm["DateOnly"] = df_date_norm["Date"].dt.floor("D")
-    daily_agg = df_date_norm.groupby("DateOnly")["Amount"].sum().reset_index()
-    
-    # 2. Reindex to full daily calendar, filling missing days with 0
-    min_date = daily_agg["DateOnly"].min()
-    max_date = daily_agg["DateOnly"].max()
-    full_calendar = pd.date_range(start=min_date, end=max_date, freq="D")
-    
-    daily_df = daily_agg.set_index("DateOnly").reindex(full_calendar, fill_value=0.0).reset_index()
-    daily_df.columns = ["Date", "DailySales"]
-    daily_df = daily_df.sort_values(by="Date").reset_index(drop=True)
-    
-    # 3. Engineer Time & Lag Features: DayOfWeek, Month, Lag_1_Day, Lag_7_Day
-    daily_df["DayOfWeek"] = daily_df["Date"].dt.dayofweek
-    daily_df["Month"] = daily_df["Date"].dt.month
-    daily_df["Lag_1_Day"] = daily_df["DailySales"].shift(1)
-    daily_df["Lag_7_Day"] = daily_df["DailySales"].shift(7)
-    
-    # Drop undefined lookback rows
-    daily_clean = daily_df.dropna().reset_index(drop=True)
-    logger.info(f"Cleaned daily calendar dataset: {len(daily_clean)} observations spanning {daily_clean['Date'].min().date()} to {daily_clean['Date'].max().date()}.")
-    
-    # Predictors strictly specified
-    feature_cols = ["DayOfWeek", "Month", "Lag_1_Day", "Lag_7_Day"]
-    target_col = "DailySales"
-    
-    # 4. Sequential Chronological 80/20 Train-Test Split (shuffle=False)
-    split_idx = int(len(daily_clean) * 0.8)
-    train_df = daily_clean.iloc[:split_idx]
-    test_df = daily_clean.iloc[split_idx:]
-    
-    X_train, y_train = train_df[feature_cols], train_df[target_col]
-    X_test, y_test = test_df[feature_cols], test_df[target_col]
-    
-    logger.info(f"Chronological 80/20 Split -> Train size: {len(X_train)} days, Test size: {len(X_test)} days.")
-    
-    # 5. Fit RandomForestRegressor
-    rf_model = RandomForestRegressor(
-        n_estimators=100,
-        max_depth=5,
-        random_state=RANDOM_STATE
-    )
-    rf_model.fit(X_train, y_train)
-    
-    # 6. Evaluate Holdout Predictions
-    y_pred = rf_model.predict(X_test)
-    mae = mean_absolute_error(y_test, y_pred)
-    r2 = r2_score(y_test, y_pred)
-    
-    logger.info("\n=== FORECAST MODEL EVALUATION METRICS ===")
-    logger.info(f"Holdout Mean Absolute Error (MAE): ${mae:.2f} USD/day")
-    logger.info(f"Holdout Coefficient of Determination (R^2): {r2:.4f}")
-    
-    # Feature Importances
-    importances = pd.Series(rf_model.feature_importances_, index=feature_cols).sort_values(ascending=False)
-    logger.info("\nFeature Importance Breakdown:\n" + importances.to_string())
-    
-    return {
-        "model": rf_model,
-        "mae": mae,
-        "r2": r2,
-        "daily_clean": daily_clean,
-        "train_df": train_df,
-        "test_df": test_df,
-        "y_test": y_test,
-        "y_pred": y_pred,
-        "feature_importances": importances
-    }
-
-
-# =====================================================================
-# STEP 4: High-Impact Visualization Dashboard
+# STEP 3: High-Impact Visualization Dashboard
 # =====================================================================
 def plot_retail_intelligence_dashboard(
     rfm_df: pd.DataFrame,
@@ -357,8 +269,30 @@ def main():
     rfm_df.to_csv(rfm_output_path, index=False)
     logger.info(f"Saved RFM customer segmentation results to '{rfm_output_path}'.")
     
-    # 3. Track 2: Daily Sales Forecasting
-    forecast_results = run_daily_sales_forecasting(transactions_df)
+    # 3. Track 2: Daily Sales Forecasting (Separated Pipeline Steps)
+    daily_clean = prepare_daily_data(transactions_df)
+    X_train, y_train, X_test, y_test, train_df, test_df = split_train_test(daily_clean)
+    
+    # Training Part Only
+    rf_model = train_model(X_train, y_train)
+    
+    # Testing Part Only
+    y_pred, mae, r2 = test_model(rf_model, X_test, y_test)
+    
+    feature_cols = X_test.columns.tolist()
+    importances = pd.Series(rf_model.feature_importances_, index=feature_cols).sort_values(ascending=False)
+    
+    forecast_results = {
+        "model": rf_model,
+        "mae": mae,
+        "r2": r2,
+        "daily_clean": daily_clean,
+        "train_df": train_df,
+        "test_df": test_df,
+        "y_test": y_test,
+        "y_pred": y_pred,
+        "feature_importances": importances
+    }
     
     # 4. Generate Visualizations
     dashboard_output_path = os.path.join(OUTPUT_DIR, "retail_intelligence_dashboard.png")
